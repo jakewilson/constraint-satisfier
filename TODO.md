@@ -1,0 +1,2 @@
+- [ ] add ability to read constraints in from file
+- [ ] add arc consistency checks
