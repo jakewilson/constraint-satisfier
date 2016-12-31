@@ -19,9 +19,11 @@ class Parser:
     def parse(self, prog):
         self.token = self.get_token(prog)
         self.prog = prog
+        self.variables = set()
+        self.constraints = []
         self.con_list()
         if self.token[self.TYPE] == Token.EOF:
-            return True
+            return (list(self.variables), self.con_list)
         else:
             raise SyntaxError
 
@@ -30,9 +32,10 @@ class Parser:
             self.con()
 
     def con(self):
-        self.match(Token.ID)
+        self.match_id()
         self.op()
         self.right_side()
+        # add constraint function here
 
     def op(self):
         if self.token[self.TYPE] == Token.EQUAL:
@@ -43,11 +46,18 @@ class Parser:
     def right_side(self):
         t = self.token[self.TYPE]
         if t == Token.ID:
-            self.match(Token.ID)
+            self.match_id()
         elif t == Token.STRING:
             self.match(Token.STRING)
         else: # t == Token.NUM
             self.match(Token.NUM)
+
+    def match_id(self):
+        # add the id to the variables if not already there
+        if self.token[self.VAL] not in self.variables:
+            self.variables.add(self.token[self.VAL])
+        self.match(Token.ID)
+        
     
     def match(self, token_type=Token.ERROR):
         if token_type == self.token[self.TYPE]:

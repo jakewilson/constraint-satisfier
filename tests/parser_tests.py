@@ -91,7 +91,10 @@ class TestParser(unittest.TestCase):
 
     def test_parser_1(self):
         self.write('var = sabby')
-        self.assertEqual(self.parser.parse(self.f), True)
+        desc = self.parser.parse(self.f)
+        self.compareLists(desc[0], ['var', 'sabby'])
+        self.assertEqual(desc[1]({'var': 1, 'sabby': 1}), True)
+        self.assertEqual(desc[1]({'var': 2, 'sabby': 1}), False)
 
     def test_parser_2(self):
         self.write('var == sa')
@@ -105,11 +108,13 @@ class TestParser(unittest.TestCase):
 
     def test_parser_4(self):
         self.write("variable = 'blue'")
-        self.assertEqual(self.parser.parse(self.f), True)
+        desc = self.parser.parse(self.f)
+        self.compareLists(desc[0], ['variable'])
 
     def test_parser_5(self):
         self.write("variable = 'blue'\nanothervar != thirdone")
-        self.assertEqual(self.parser.parse(self.f), True)
+        desc = self.parser.parse(self.f)
+        self.compareLists(desc[0], ['variable', 'anothervar', 'thirdone'])
 
     def test_parser_6(self):
         self.write("variable = 'blue'\nanothervar")
@@ -118,14 +123,18 @@ class TestParser(unittest.TestCase):
 
     def test_parser_7(self):
         self.write('var = 89')
-        self.assertEqual(self.parser.parse(self.f), True)
+        desc = self.parser.parse(self.f)
+        self.compareLists(desc[0], ['var'])
 
     def write(self, s):
         self.f.seek(0, 0)
         self.f.truncate() # remove file contents
         self.f.write(s)
         self.f.seek(0, 0)
-        
+
+    def compareLists(self, ret, l):
+        for name in l:
+            self.assertEqual(name in ret, True)
 
 if __name__ == '__main__':
     unittest.main()
