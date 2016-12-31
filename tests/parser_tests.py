@@ -57,6 +57,25 @@ class TestParser(unittest.TestCase):
         self.assertEqual((parser.Token.ID, 'var'), parser.get_token(self.f))
         self.assertEqual((parser.Token.ERROR,), parser.get_token(self.f))
 
+    def test_is_letter(self):
+        for c in xrange(ord('A'), ord('Z')):
+            self.assertEqual(parser.is_letter(chr(c)), True)
+        for c in xrange(ord('a'), ord('z')):
+            self.assertEqual(parser.is_letter(chr(c)), True)
+
+        # test off by one errors
+        self.assertEqual(parser.is_letter(chr(ord('A') - 1)), False)
+        self.assertEqual(parser.is_letter(chr(ord('Z') + 1)), False)
+        self.assertEqual(parser.is_letter(chr(ord('a') - 1)), False)
+        self.assertEqual(parser.is_letter(chr(ord('z') + 1)), False)
+
+    def test_is_digit(self):
+        for c in xrange(ord('0'), ord('9')):
+            self.assertEqual(parser.is_digit(chr(c)), True)
+
+        self.assertEqual(parser.is_digit(chr(ord('0') - 1)), False)
+        self.assertEqual(parser.is_digit(chr(ord('9') + 1)), False)
+
     def write(self, s):
         self.f.seek(0, 0)
         self.f.truncate() # remove file contents

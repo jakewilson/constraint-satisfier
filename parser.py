@@ -70,12 +70,3 @@ def is_digit(c):
     if c == '': return False
     char = ord(c)
     return (char >= 48 and char <= 57)
-
-
-if __name__ == '__main__':
-    f = open('constraints', 'r')
-    token = get_token(f)
-    while token[0] != Token.EOF:
-        print token
-        token = get_token(f)
-    f.close()
