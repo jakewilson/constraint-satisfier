@@ -3,7 +3,9 @@ class Token:
     NUM       = 1
     EQUAL     = 2
     NOT_EQUAL = 3
+    STRING    = 4
     EOF       = 100
+    ERROR     = 101
 
 def get_token(prog):
     """ Retrieves the next token from prog, which is an open constraint file """
@@ -18,7 +20,8 @@ def get_token(prog):
             iden = c
 
             c = prog.read(1)
-            while (is_letter(c)):
+            # id's must start with a letter, but can contain both letters and digits
+            while (is_letter(c) or is_digit(c)):
                 iden += c
                 c = prog.read(1)
 
@@ -33,15 +36,25 @@ def get_token(prog):
                 c = prog.read(1)
 
             prog.seek(-1, 1)
-            return (Token.NUM, iden)
+            return (Token.NUM, int(num))
         elif c == '!':
             # a '=' must follow
             if prog.read(1) != '=':
-                raise SyntaxError()
+                return (Token.ERROR,)
             else:
                 return (Token.NOT_EQUAL,)
         elif c == '=':
             return (Token.EQUAL,)
+        elif c == '\'': # string
+            string = ''
+            c = prog.read(1)
+            while c != '\'':
+                if c == '':
+                    return (Token.ERROR,)
+                string += c
+                c = prog.read(1)
+
+            return (Token.STRING, string)
         elif c == '': # EOF?
             return (Token.EOF,)
             break
@@ -59,8 +72,10 @@ def is_digit(c):
     return (char >= 48 and char <= 57)
 
 
-f = open('constraints', 'r')
-token = get_token(f)
-while token[0] != Token.EOF:
-    print token
+if __name__ == '__main__':
+    f = open('constraints', 'r')
     token = get_token(f)
+    while token[0] != Token.EOF:
+        print token
+        token = get_token(f)
+    f.close()

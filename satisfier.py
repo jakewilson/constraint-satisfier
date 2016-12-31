@@ -4,6 +4,8 @@
 # 12/30/16
 #
 
+import parser
+
 class Problem:
 
     def __init__(self, variables=[], constraints=[]):
@@ -48,7 +50,9 @@ def recBacktrackingSearch(problem, assignment):
             
     return problem.FAILURE
 
-variables = [('FL', set(['r', 'b', 'g'])), ('GA', set(['r', 'b', 'g'])), ('AL', set(['r', 'b', 'g']))]
+"""
+variables = [('FL', set(['r', 'b'])), ('GA', set(['r', 'b', 'g'])), ('AL', set(['r', 'b']))]
 constraints = [lambda a: a['FL'] != a['GA'], lambda a: a['FL'] != a['AL'], lambda a: a['GA'] != a['AL']]
-problem = Problem(variables, constraints)
+"""
+problem = Problem()
 print backtrackingSearch(problem)
