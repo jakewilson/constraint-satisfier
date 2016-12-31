@@ -58,6 +58,18 @@ class TestParser(unittest.TestCase):
         self.assertEqual((parser.Token.ID, 'var'), self.parser.get_token(self.f))
         self.assertEqual((parser.Token.ERROR,), self.parser.get_token(self.f))
 
+    def test_tokenizer_6(self):
+        self.write('var = sa')
+        self.assertEqual((parser.Token.ID, 'var'), self.parser.get_token(self.f))
+        self.assertEqual((parser.Token.EQUAL,), self.parser.get_token(self.f))
+        self.assertEqual((parser.Token.ID, 'sa'), self.parser.get_token(self.f))
+
+    def test_tokenizer_7(self):
+        self.write('var=sa')
+        self.assertEqual((parser.Token.ID, 'var'), self.parser.get_token(self.f))
+        self.assertEqual((parser.Token.EQUAL,), self.parser.get_token(self.f))
+        self.assertEqual((parser.Token.ID, 'sa'), self.parser.get_token(self.f))
+
     def test_is_letter(self):
         for c in xrange(ord('A'), ord('Z')):
             self.assertEqual(parser.is_letter(chr(c)), True)
@@ -78,13 +90,35 @@ class TestParser(unittest.TestCase):
         self.assertEqual(parser.is_digit(chr(ord('9') + 1)), False)
 
     def test_parser_1(self):
-        self.write('var = sa')
+        self.write('var = sabby')
         self.assertEqual(self.parser.parse(self.f), True)
 
     def test_parser_2(self):
         self.write('var == sa')
         with self.assertRaises(SyntaxError):
             self.parser.parse(self.f)
+
+    def test_parser_3(self):
+        self.write('25 = SA')
+        with self.assertRaises(SyntaxError):
+            self.parser.parse(self.f)
+
+    def test_parser_4(self):
+        self.write("variable = 'blue'")
+        self.assertEqual(self.parser.parse(self.f), True)
+
+    def test_parser_5(self):
+        self.write("variable = 'blue'\nanothervar != thirdone")
+        self.assertEqual(self.parser.parse(self.f), True)
+
+    def test_parser_6(self):
+        self.write("variable = 'blue'\nanothervar")
+        with self.assertRaises(SyntaxError):
+            self.parser.parse(self.f)
+
+    def test_parser_7(self):
+        self.write('var = 89')
+        self.assertEqual(self.parser.parse(self.f), True)
 
     def write(self, s):
         self.f.seek(0, 0)

@@ -20,11 +20,14 @@ class Parser:
         self.token = self.get_token(prog)
         self.prog = prog
         self.con_list()
-        return True
+        if self.token[self.TYPE] == Token.EOF:
+            return True
+        else:
+            raise SyntaxError
 
     def con_list(self):
-        # TODO
-        self.con()
+        while self.token[self.TYPE] == Token.ID:
+            self.con()
 
     def con(self):
         self.match(Token.ID)
@@ -76,7 +79,7 @@ class Parser:
                     iden += c
                     c = prog.read(1)
     
-                prog.seek(-1, 1)
+                if c!= '': prog.seek(-1, 1)
                 return (Token.ID, iden)
             elif is_digit(c):
                 num = c
@@ -86,7 +89,7 @@ class Parser:
                     num += c
                     c = prog.read(1)
     
-                prog.seek(-1, 1)
+                if c != '': prog.seek(-1, 1)
                 return (Token.NUM, int(num))
             elif c == '!':
                 # a '=' must follow
