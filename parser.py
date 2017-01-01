@@ -9,8 +9,13 @@ class Token:
 
 class Parser:
 
-    TYPE = 0
-    VAL  = 1
+    TYPE  = 0
+    VAL   = 1
+
+    # for indexing the constraint tuple
+    LEFT  = 0
+    OP    = 1
+    RIGHT = 2
 
     def __init__(self):
         self.lineno = 1
@@ -23,7 +28,7 @@ class Parser:
         self.constraints = []
         self.con_list()
         if self.token[self.TYPE] == Token.EOF:
-            return (list(self.variables), self.con_list)
+            return (list(self.variables), self.constraints)
         else:
             raise SyntaxError
 
@@ -32,30 +37,41 @@ class Parser:
             self.con()
 
     def con(self):
+        self.constraint = ()
         self.match_id()
         self.op()
         self.right_side()
-        # add constraint function here
+        self.add_constraint()
 
     def op(self):
-        if self.token[self.TYPE] == Token.EQUAL:
+        t = self.token[self.TYPE]
+        self.constraint += (t,)
+        if t == Token.EQUAL:
             self.match(Token.EQUAL)
-        else: # self.token[self.TYPE] == Token.NOT_EQUAL
+        else: # t == Token.NOT_EQUAL
             self.match(Token.NOT_EQUAL)
 
     def right_side(self):
         t = self.token[self.TYPE]
+        self.right_is_id = False
         if t == Token.ID:
             self.match_id()
-        elif t == Token.STRING:
+            self.right_is_id = True
+            return
+        if t == Token.STRING:
+            self.constraint += (self.token[self.VAL],)
             self.match(Token.STRING)
-        else: # t == Token.NUM
+        elif t == Token.NUM:
+            self.constraint += (self.token[self.VAL],)
             self.match(Token.NUM)
 
     def match_id(self):
         # add the id to the variables if not already there
-        if self.token[self.VAL] not in self.variables:
-            self.variables.add(self.token[self.VAL])
+        iden = self.token[self.VAL]
+        if iden not in self.variables:
+            self.variables.add(iden)
+
+        self.constraint += (iden,)
         self.match(Token.ID)
         
     
@@ -67,6 +83,20 @@ class Parser:
             # TODO
             #print "[Parser] Line ", self.lineno, " saw ", self.token[self.VAL], " expected ", token_type
             raise SyntaxError()
+
+    def add_constraint(self):
+        op = self.constraint[self.OP] 
+        constraint = self.constraint
+        if op == Token.EQUAL:
+            if self.right_is_id:
+                self.constraints.append(lambda x: x[constraint[self.LEFT]] == x[constraint[self.RIGHT]])
+            else:
+                self.constraints.append(lambda x: x[constraint[self.LEFT]] == constraint[self.RIGHT])
+        elif op == Token.NOT_EQUAL:
+            if self.right_is_id:
+                self.constraints.append(lambda x: x[constraint[self.LEFT]] != x[constraint[self.RIGHT]])
+            else:
+                self.constraints.append(lambda x: x[constraint[self.LEFT]] != constraint[self.RIGHT])
     
     def get_token(self, prog=None):
         """ Retrieves the next token from prog, which is an open constraint file """

@@ -93,8 +93,9 @@ class TestParser(unittest.TestCase):
         self.write('var = sabby')
         desc = self.parser.parse(self.f)
         self.compareLists(desc[0], ['var', 'sabby'])
-        self.assertEqual(desc[1]({'var': 1, 'sabby': 1}), True)
-        self.assertEqual(desc[1]({'var': 2, 'sabby': 1}), False)
+        cons = desc[1]
+        self.assertEquals(cons[0]({'var': 1, 'sabby': 1}), True)
+        self.assertEquals(cons[0]({'var': 1, 'sabby': 2}), False)
 
     def test_parser_2(self):
         self.write('var == sa')
@@ -126,6 +127,14 @@ class TestParser(unittest.TestCase):
         desc = self.parser.parse(self.f)
         self.compareLists(desc[0], ['var'])
 
+    def test_parser_8(self):
+        self.write('WA != NT\nWA != SA NT != Q NT != SA SA != Q SA != NSW SA != V\n\n\nNSW != V')
+        desc = self.parser.parse(self.f)
+        self.compareLists(desc[0], ['WA', 'NT', 'SA', 'Q', 'NSW', 'V'])
+        cons = desc[1]
+        self.assertEquals(self.checkConstraints(cons, {'WA': 1, 'NT': 2, 'SA': 3, 'Q': 1, 'NSW': 2, 'V': 1}), True)
+        self.assertEquals(self.checkConstraints(cons, {'WA': 1, 'NT': 2, 'SA': 3, 'Q': 1, 'NSW': 2, 'V': 2}), False)
+
     def write(self, s):
         self.f.seek(0, 0)
         self.f.truncate() # remove file contents
@@ -135,6 +144,13 @@ class TestParser(unittest.TestCase):
     def compareLists(self, ret, l):
         for name in l:
             self.assertEqual(name in ret, True)
+
+    def checkConstraints(self, cons, v):
+        for c in cons:
+            if c(v) != True:
+                return False
+
+        return True
 
 if __name__ == '__main__':
     unittest.main()
