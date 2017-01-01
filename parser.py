@@ -4,6 +4,9 @@ class Token:
     EQUAL     = 2
     NOT_EQUAL = 3
     STRING    = 4
+    DOM_BEG   = 5
+    DOM_END   = 6
+    COMMA     = 7
     EOF       = 100
     ERROR     = 101
 
@@ -24,11 +27,15 @@ class Parser:
     def parse(self, prog):
         self.token = self.get_token(prog)
         self.prog = prog
+
         self.variables = set()
         self.constraints = []
+        self.domain_set = set()
+
+        self.domain()
         self.con_list()
         if self.token[self.TYPE] == Token.EOF:
-            return (list(self.variables), self.constraints)
+            return (list(self.variables), self.constraints, self.domain_set)
         else:
             raise SyntaxError
 
@@ -58,12 +65,39 @@ class Parser:
             self.match_id()
             self.right_is_id = True
             return
+
+        token = self.token
+        self.literal()
+        self.constraint += (token[self.VAL],)
+
+    def literal(self):
+        t = self.token[self.TYPE]
         if t == Token.STRING:
-            self.constraint += (self.token[self.VAL],)
-            self.match(Token.STRING)
+            self.match(t)
         elif t == Token.NUM:
-            self.constraint += (self.token[self.VAL],)
-            self.match(Token.NUM)
+            self.match(t)
+        else:
+            self.match(Token.ERROR)
+
+    def domain_literal(self):
+        token = self.token
+        self.literal()
+        self.domain_set.add(token[self.VAL])
+
+    def domain(self):
+        self.match(Token.DOM_BEG)
+        self.domainlist()
+        self.match(Token.DOM_END)
+
+    def domainlist(self):
+        while self.token[self.TYPE] == Token.STRING or self.token[self.TYPE] == Token.NUM:
+            self.domain_literal()
+            self.valuelist()
+
+    def valuelist(self):
+        while self.token[self.TYPE] == Token.COMMA:
+            self.match(Token.COMMA)
+            self.domain_literal()
 
     def match_id(self):
         # add the id to the variables if not already there
@@ -139,19 +173,28 @@ class Parser:
                     return (Token.NOT_EQUAL,)
             elif c == '=':
                 return (Token.EQUAL,)
-            elif c == '\'': # string
+            elif c == '\'' or c == '"': # string
                 string = ''
                 c = prog.read(1)
-                while c != '\'':
+                while c != '\'' and c != '"':
                     if c == '':
                         return (Token.ERROR,)
                     string += c
                     c = prog.read(1)
     
                 return (Token.STRING, string)
-            elif c == '': # EOF?
+            elif c == '{':
+                return (Token.DOM_BEG,)
+            elif c == '}':
+                return (Token.DOM_END,)
+            elif c == ',':
+                return (Token.COMMA,)
+            elif c == '':
                 return (Token.EOF,)
                 break
+            else:
+                print '[Lexer] Illegal token on line ', self.lineno, ': \'', c, '\''
+                return (Token.ERROR,)
                     
     
 def is_letter(c):

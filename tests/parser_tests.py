@@ -70,6 +70,16 @@ class TestParser(unittest.TestCase):
         self.assertEqual((parser.Token.EQUAL,), self.parser.get_token(self.f))
         self.assertEqual((parser.Token.ID, 'sa'), self.parser.get_token(self.f))
 
+    def test_tokenizer_8(self):
+        self.write("{'red', 'blue', 'green'}")
+        self.assertEqual((parser.Token.DOM_BEG,), self.parser.get_token(self.f))
+        self.assertEqual((parser.Token.STRING, 'red'), self.parser.get_token(self.f))
+        self.assertEqual((parser.Token.COMMA,), self.parser.get_token(self.f))
+        self.assertEqual((parser.Token.STRING, 'blue'), self.parser.get_token(self.f))
+        self.assertEqual((parser.Token.COMMA,), self.parser.get_token(self.f))
+        self.assertEqual((parser.Token.STRING, 'green'), self.parser.get_token(self.f))
+        self.assertEqual((parser.Token.DOM_END,), self.parser.get_token(self.f))
+
     def test_is_letter(self):
         for c in xrange(ord('A'), ord('Z')):
             self.assertEqual(parser.is_letter(chr(c)), True)
@@ -90,12 +100,14 @@ class TestParser(unittest.TestCase):
         self.assertEqual(parser.is_digit(chr(ord('9') + 1)), False)
 
     def test_parser_1(self):
-        self.write('var = sabby')
+        self.write('{\'red\'} var = sabby')
         desc = self.parser.parse(self.f)
         self.compareLists(desc[0], ['var', 'sabby'])
         cons = desc[1]
         self.assertEquals(cons[0]({'var': 1, 'sabby': 1}), True)
         self.assertEquals(cons[0]({'var': 1, 'sabby': 2}), False)
+        domain = desc[2]
+        self.compareLists(list(desc[2]), ['red'])
 
     def test_parser_2(self):
         self.write('var == sa')
@@ -108,14 +120,18 @@ class TestParser(unittest.TestCase):
             self.parser.parse(self.f)
 
     def test_parser_4(self):
-        self.write("variable = 'blue'")
+        self.write("{1, 2, 3} variable = 'blue'")
         desc = self.parser.parse(self.f)
         self.compareLists(desc[0], ['variable'])
+        domain = desc[2]
+        self.compareLists(list(desc[2]), [1, 2, 3])
 
     def test_parser_5(self):
-        self.write("variable = 'blue'\nanothervar != thirdone")
+        self.write("{5, 6} variable = 'blue'\nanothervar != thirdone")
         desc = self.parser.parse(self.f)
         self.compareLists(desc[0], ['variable', 'anothervar', 'thirdone'])
+        domain = desc[2]
+        self.compareLists(list(desc[2]), [5, 6])
 
     def test_parser_6(self):
         self.write("variable = 'blue'\nanothervar")
@@ -123,17 +139,36 @@ class TestParser(unittest.TestCase):
             self.parser.parse(self.f)
 
     def test_parser_7(self):
-        self.write('var = 89')
+        self.write('{"hello", "hi" } var = 89')
         desc = self.parser.parse(self.f)
         self.compareLists(desc[0], ['var'])
+        domain = desc[2]
+        self.compareLists(list(desc[2]), ['hello', 'hi'])
 
     def test_parser_8(self):
-        self.write('WA != NT\nWA != SA NT != Q NT != SA SA != Q SA != NSW SA != V\n\n\nNSW != V')
+        self.write('{"this", "is"  , "the",   "domain"} WA != NT\nWA != SA NT != Q NT != SA SA != Q SA != NSW SA != V\n\n\nNSW != V')
         desc = self.parser.parse(self.f)
         self.compareLists(desc[0], ['WA', 'NT', 'SA', 'Q', 'NSW', 'V'])
         cons = desc[1]
         self.assertEquals(self.checkConstraints(cons, {'WA': 1, 'NT': 2, 'SA': 3, 'Q': 1, 'NSW': 2, 'V': 1}), True)
         self.assertEquals(self.checkConstraints(cons, {'WA': 1, 'NT': 2, 'SA': 3, 'Q': 1, 'NSW': 2, 'V': 2}), False)
+        domain = desc[2]
+        self.compareLists(list(desc[2]), ['this', 'is', 'the', 'domain'])
+
+    def test_parser_8(self):
+        self.write(" {'red', 'blue', 'green'}WA != NT\nWA != SA NT != Q NT != SA SA != Q SA != NSW SA != V\n\n\nNSW != V")
+        desc = self.parser.parse(self.f)
+        self.compareLists(desc[0], ['WA', 'NT', 'SA', 'Q', 'NSW', 'V'])
+        cons = desc[1]
+        self.assertEquals(self.checkConstraints(cons, {'WA': 1, 'NT': 2, 'SA': 3, 'Q': 1, 'NSW': 2, 'V': 1}), True)
+        self.assertEquals(self.checkConstraints(cons, {'WA': 1, 'NT': 2, 'SA': 3, 'Q': 1, 'NSW': 2, 'V': 2}), False)
+        domain = desc[2]
+        self.compareLists(list(desc[2]), ['red', 'blue', 'green'])
+
+    def test_parser_9(self):
+        self.write("{'hi',,,} var == sa")
+        with self.assertRaises(SyntaxError):
+            self.parser.parse(self.f)
 
     def write(self, s):
         self.f.seek(0, 0)
