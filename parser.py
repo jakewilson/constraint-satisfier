@@ -206,9 +206,3 @@ def is_digit(c):
     if c == '': return False
     char = ord(c)
     return (char >= 48 and char <= 57)
-
-if __name__ == '__main__':
-    parser = Parser()
-    with open('constraints') as f:
-        parser.parse(f)
-    print parser.token

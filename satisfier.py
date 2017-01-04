@@ -4,13 +4,16 @@
 # 12/30/16
 #
 
-import parser
+import sys
+import parser as parser_lib
 
 class Problem:
 
-    def __init__(self, variables=[], constraints=[]):
-        self.variables = variables
-        self.constraints = constraints
+    def __init__(self, definition):
+        self.variables = []
+        for v in definition[0]:
+            self.variables.append((v, definition[2]))
+        self.constraints = definition[1]
         # indices for the variable list of tuples
         self.NAME = 0
         self.DOMAIN = 1
@@ -21,7 +24,7 @@ class Problem:
         return len(self.variables) == len(assignment)
 
     def checkConstraints(self, assignment):
-        for constraint in constraints:
+        for constraint in self.constraints:
             try:
                 if not constraint(assignment):
                     return False
@@ -50,9 +53,13 @@ def recBacktrackingSearch(problem, assignment):
             
     return problem.FAILURE
 
-"""
-variables = [('FL', set(['r', 'b'])), ('GA', set(['r', 'b', 'g'])), ('AL', set(['r', 'b']))]
-constraints = [lambda a: a['FL'] != a['GA'], lambda a: a['FL'] != a['AL'], lambda a: a['GA'] != a['AL']]
-"""
-problem = Problem()
+
+
+
+if len(sys.argv) == 0:
+    print "[ERROR] you must enter a constraint file."
+    sys.exit(1)
+
+parser = parser_lib.Parser()
+problem = Problem(parser.parse(open(sys.argv[1])))
 print backtrackingSearch(problem)
